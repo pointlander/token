@@ -5,12 +5,12 @@
 package main
 
 import (
-	"bytes"
-	"compress/gzip"
+	//"bytes"
+	//"compress/gzip"
 	"encoding/binary"
 	"fmt"
 	"io/ioutil"
-	"math"
+	//"math"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -54,36 +54,20 @@ func (g *Genome) ComputeFitness() {
 		tokens[token] = t
 	}
 
-	fitness, length := 0.0, len(tokens)
+	fitness := 0.0
 	for _, set := range tokens {
-		buffer := bytes.Buffer{}
-		writer := gzip.NewWriter(&buffer)
-		_, err := writer.Write(set)
-		if err != nil {
-			panic(err)
-		}
-		err = writer.Close()
-		if err != nil {
-			panic(err)
-		}
-		fitness += float64(buffer.Len()) / float64(len(set))
+		complexity := NewComplexity(CDF16Depth)
+		fitness += float64(complexity.Complexity(set))
 	}
 
-	buffer := bytes.Buffer{}
-	writer := gzip.NewWriter(&buffer)
+	complexity := NewComplexity(CDF16Depth)
 	output := make([]byte, 8)
+	buffer := make([]byte, 0, 8)
 	for _, t := range g.Tokens {
 		binary.LittleEndian.PutUint64(output, uint64(t))
-		_, err := writer.Write(output)
-		if err != nil {
-			panic(err)
-		}
+		buffer = append(buffer, output...)
 	}
-	err := writer.Close()
-	if err != nil {
-		panic(err)
-	}
-	fitness += float64(length*buffer.Len()) / (float64(len(g.Tokens)) * math.Log2(float64(length)))
+	fitness += float64(complexity.Complexity(buffer))
 
 	g.Fitness = fitness
 }
@@ -159,7 +143,7 @@ func main() {
 		}
 		fmt.Println(genomes[0].Fitness, len(tokens))
 
-		if genomes[0].Fitness < 4050 || fini {
+		if fini {
 			genomes[0].Print()
 			break
 		}
