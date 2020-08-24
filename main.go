@@ -34,8 +34,12 @@ type Genome struct {
 func NewGenome() Genome {
 	length := len(Curie)
 	tokens := make([]int64, length)
+	token := int64(rand.Intn(length))
 	for i := range tokens {
-		tokens[i] = int64(rand.Intn(length))
+		tokens[i] = token
+		if rand.Intn(8) == 0 {
+			token = int64(rand.Intn(length))
+		}
 	}
 	return Genome{
 		Tokens: tokens,
@@ -59,6 +63,7 @@ func (g *Genome) ComputeFitness() {
 		complexity := NewComplexity(CDF16Depth)
 		fitness += float64(complexity.Complexity(set))
 	}
+	fitness /= float64(len(tokens))
 
 	complexity := NewComplexity(CDF16Depth)
 	output := make([]byte, 8)
